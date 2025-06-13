@@ -14,23 +14,25 @@ model = GenerativeModel("gemini-1.5-pro-001")
 @app.route("/", methods=["POST"])
 def handler():
     """
-    Receives a plain text log message from Graylog, analyzes it with Vertex AI,
+    Receives a full Graylog message object as JSON, analyzes it with Vertex AI,
     and returns a structured JSON response.
     """
-    # Get the raw log message text sent from Graylog
-    log_message = request.get_data(as_text=True)
+    request_json = request.get_json(silent=True)
 
-    if not log_message:
-        return jsonify({"error": "Invalid request. No log message text found."}), 400
+    # The full alert data is now in the 'message' key
+    if not request_json or 'message' not in request_json:
+        return jsonify({"error": "Invalid JSON request. No 'message' field found."}), 400
 
-    # --- This is the simplified prompt ---
+    # We pass the inner message object to the prompt
+    alert_data = json.dumps(request_json.get('message', {}))
+
     prompt = f"""
-    You are a Tier 2 SOC Analyst. Analyze the following raw security log message.
-    The log message is: ```{log_message}```
+    You are a Tier 2 SOC Analyst. Analyze the following security alert JSON.
+    The alert data is: ```json\n{alert_data}\n```
 
     Your tasks:
     1. Briefly summarize the event in one sentence.
-    2. Based on the log, what is the likely MITRE ATT&CK Tactic and Technique? If not applicable, state "N/A".
+    2. Based on the rule description and log data, what is the MITRE ATT&CK Tactic and Technique? If not applicable, state "N/A".
     3. Rate the likely severity on a scale of 1-10.
     4. Is this likely a false positive? Answer with 'Yes', 'No', or 'Needs Investigation'.
     5. Suggest one immediate investigation step for an analyst.
