@@ -8,7 +8,7 @@ from flask import Flask, request, jsonify
 # --- CONFIGURATION ---
 # You will get this URL from the Graylog Input you create in Step 4.
 # It will look something like: "http://<your-graylog-ip>:12201/gelf"
-GELF_HTTP_INPUT_URL = "YOUR_GRAYLOG_GELF_HTTP_INPUT_URL"
+GELF_HTTP_INPUT_URL = "http://10.255.10.42:12201/gelf"
 # -------------------
 
 # Initialize Flask App
